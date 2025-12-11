@@ -12,29 +12,39 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Setup JDK 11
+      # --- CHANGE 1: Setup Java 17 FIRST ---
+      # This is needed for the modern Android SDK Manager
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      # --- CHANGE 2: Accept licenses with Java 17 active ---
+      # This step will now use the Java 17 we just set up
+      - name: Accept Android Licenses
+        run: yes | flutter doctor --android-licenses
+
+      # --- CHANGE 3: Setup Java 11 FOR THE BUILD ---
+      # This sets up Java 11 and makes it the default for subsequent steps
+      - name: Setup JDK 11 for Flutter Build
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '11'
 
       - name: Set up Flutter
-        uses: subosito/flutter-action@v2.10.0
+        uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-
-      - name: Check Flutter version
-        run: flutter --version
-
-      - name: Accept Android Licenses
-        run: yes | flutter doctor --android-licenses
 
       - name: Install dependencies
         run: flutter pub get
 
+      # --- CHANGE 4: Simplified Build Step ---
+      # We no longer need to manually set JAVA_HOME here because the previous
+      # 'Setup JDK 11' step already configured the environment correctly.
       - name: Build APK (release)
-        env:
-          JAVA_HOME: /opt/hostedtoolcache/Java/temurin-11-*/x64
         run: flutter build apk --release --no-shrink
 
       - name: Upload APK artifact
