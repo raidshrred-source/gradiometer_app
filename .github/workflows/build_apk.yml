@@ -19,12 +19,15 @@ jobs:
           java-version: '11'
 
       - name: Set up Flutter
-        uses: subosito/flutter-action@v2
+        uses: subosito/flutter-action@v2.10.0
         with:
           channel: 'stable'
 
+      - name: Check Flutter version
+        run: flutter --version
+
       - name: Accept Android Licenses
-        run: yes | $FLUTTER_HOME/bin/flutter doctor --android-licenses
+        run: yes | flutter doctor --android-licenses
 
       - name: Install dependencies
         run: flutter pub get
