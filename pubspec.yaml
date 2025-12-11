@@ -1,0 +1,24 @@
+name: gradiometer_app
+description: Gradiometer Companion with GND save/load
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ">=2.18.0 <3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_bluetooth_serial: ^0.5.0
+  fl_chart: ^0.60.0
+  path_provider: ^2.0.11
+  csv: ^5.0.0
+  shared_preferences: ^2.0.15
+  vibration: ^1.7.4
+  audioplayers: ^0.20.1
+  share_plus: ^6.3.0
+  intl: ^0.18.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
