@@ -12,28 +12,24 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      # --- KEY CHANGE: Set up Flutter FIRST ---
-      # This makes the 'flutter' command available to all subsequent steps.
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
 
-      # --- Setup Java 17 for Android SDK tools ---
-      # The Android SDK Manager now requires Java 17 to run.
+      # NEW STEP: Clean the Flutter cache to ensure a fresh download
+      - name: Clean Flutter Cache
+        run: flutter clean
+
       - name: Setup JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      # --- Now this step will work ---
-      # It can find the 'flutter' command and use the correct Java 17 version.
       - name: Accept Android Licenses
         run: yes | flutter doctor --android-licenses
 
-      # --- Setup Java 11 for the Flutter build ---
-      # Your project's Gradle build process requires Java 11.
       - name: Setup JDK 11 for Flutter Build
         uses: actions/setup-java@v4
         with:
@@ -44,7 +40,6 @@ jobs:
         run: flutter pub get
 
       - name: Build APK (release)
-        # This step will now use Java 11 as configured in the step above.
         run: flutter build apk --release --no-shrink
 
       - name: Upload APK artifact
