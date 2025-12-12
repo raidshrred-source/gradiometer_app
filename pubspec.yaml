@@ -9,15 +9,10 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  flutter_bluetooth_serial_basic: ^0.1.1 # <-- USE THIS LINE
+  flutter_bluetooth_serial_fork: ^0.3.1 # <-- USE THIS LINE
   fl_chart: ^0.68.0
   path_provider: ^2.1.3
   csv: ^6.0.0
-  shared_preferences: ^2.2.3
-  vibration: ^1.8.4
-  audioplayers: ^6.0.0
-  share_plus: ^9.0.0
-  intl: ^0.19.0
 
 dev_dependencies:
   flutter_test:
