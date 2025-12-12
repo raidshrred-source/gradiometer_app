@@ -1,10 +1,5 @@
 // lib/main.dart
-// EDITED: Replaced flutter_bluetooth_serial with bluetooth_connection package.
-// Changes:
-// 1. Updated the import statement on line 11.
-// 2. Removed the _bluetooth instance variable (line 42).
-// 3. Updated getBondedDevices() to use the new package's static method (line ~80).
-// 4. Updated connection logic to use the new package's static method (line ~120).
+// This is the original code, which is compatible with the new package.
 
 import 'dart:async';
 import 'dart:convert';
@@ -12,8 +7,7 @@ import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
-// CHANGE 1: Updated the import statement
-import 'package:bluetooth_connection/bluetooth_connection.dart';
+import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart'; // This is the correct import for the new package
 import 'package:fl_chart/fl_chart.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:csv/csv.dart';
@@ -58,7 +52,7 @@ enum FilterType { none, movingAverage, iirLowPass, median, kalman }
 
 class _HomeScreenState extends State<HomeScreen> {
   // Bluetooth
-  // CHANGE 2: The instance is no longer needed. We use static methods.
+  final FlutterBluetoothSerial _bluetooth = FlutterBluetoothSerial.instance;
   BluetoothConnection? _connection;
   StreamSubscription<Uint8List>? _btSub;
   List<BluetoothDevice> _bondedDevices = [];
@@ -138,8 +132,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _initApp() async {
-    // CHANGE 3: Use the static method to get devices
-    _bondedDevices = await BluetoothConnection.getDevices();
+    _bondedDevices = await _bluetooth.getBondedDevices();
     appDir = await getApplicationDocumentsDirectory();
     prefs = await SharedPreferences.getInstance();
     _loadPrefs();
@@ -177,8 +170,7 @@ class _HomeScreenState extends State<HomeScreen> {
       await _connection?.close();
     } catch (_) {}
     try {
-      // CHANGE 4: Use the static method to connect
-      BluetoothConnection conn = await BluetoothConnection.connect(device.address);
+      BluetoothConnection conn = await BluetoothConnection.toAddress(device.address);
       _connection = conn;
       _connected = true;
       _selectedDevice = device;
@@ -694,8 +686,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     IconButton(
                       icon: const Icon(Icons.refresh),
                       onPressed: () async {
-                        // Use the new static method here as well
-                        _bondedDevices = await BluetoothConnection.getDevices();
+                        _bondedDevices = await _bluetooth.getBondedDevices();
                         setState(() {});
                       },
                     )
