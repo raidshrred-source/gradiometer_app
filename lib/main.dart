@@ -9,7 +9,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
-import 'package:flutter/material.dart';
+import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 import 'package:bluetooth/bluetooth.dart'; // The new, verified package
 import 'package:bluetooth_classic/bluetooth_classic.dart' as bc; // For device model compatibility
 import 'package:fl_chart/fl_chart.dart';
