@@ -1,6 +1,6 @@
 // lib/main.dart
 //
-// FINAL VERSION: Uses the verified 'bluetooth' package.
+// FINAL VERSION: Uses verified 'flutter_bluetooth_serial_plus' package.
 // The Bluetooth logic has been rewritten to match the new package's API.
 //
 
@@ -9,9 +9,8 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
-import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
-import 'package:bluetooth/bluetooth.dart'; // The new, verified package
-import 'package:bluetooth_classic/bluetooth_classic.dart' as bc; // For device model compatibility
+import 'package:flutter/material.dart';
+import 'package:flutter_bluetooth_serial_plus/flutter_bluetooth_serial_plus.dart'; // The new, verified package
 import 'package:fl_chart/fl_chart.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:csv/csv.dart';
@@ -48,15 +47,15 @@ class HomeScreen extends StatefulWidget {
 enum FilterType { none, movingAverage, iirLowPass, median, kalman }
 
 class _HomeScreenState extends State<HomeScreen> {
-  // Bluetooth - Using the new 'bluetooth' package
-  bool _isBluetoothEnabled = false;
+  // Bluetooth - Using new 'flutter_bluetooth_serial_plus' package
+  BluetoothManager? _bluetoothManager;
   List<BluetoothDevice> _bondedDevices = [];
   List<BluetoothDiscoveryResult> _discoveredDevices = [];
   BluetoothDevice? _selectedDevice;
   BluetoothConnection? _connection;
   StreamSubscription<Uint8List>? _btSub;
   bool _connected = false;
-  StreamSubscription<BluetoothDiscoveryResult>? _discoveryStreamSubscription;
+  bool _isScanning = false;
 
   // Serial buffer
   String _buffer = "";
@@ -139,30 +138,27 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _initBluetooth() async {
-    // Check if Bluetooth is available and enabled
-    _isBluetoothEnabled = await Bluetooth.isEnabled;
-    if (!_isBluetoothEnabled) {
-      // Optionally, ask the user to enable it
+    _bluetoothManager = BluetoothManager.instance;
+    if (!await _bluetoothManager!.isAvailable) {
+      _showSnack("Bluetooth is not available on this device");
+      return;
+    }
+    if (!await _bluetoothManager!.isEnabled) {
+      // Optionally, ask user to enable it
       // _showSnack("Please enable Bluetooth.");
     }
-    // Get bonded devices
-    _bondedDevices = await Bluetooth.getBondedDevices();
+    _bondedDevices = await _bluetoothManager!.getBondedDevices();
     setState(() {});
   }
 
   void _startDiscovery() {
-    _discoveredDevices.clear();
-    _discoveryStreamSubscription = Bluetooth.startDiscovery().listen((result) {
-      if (!_discoveredDevices.any((d) => d.device?.address == result.device?.address)) {
-        setState(() {
-          _discoveredDevices.add(result);
-        });
+    setState(() { _isScanning = true; _discoveredDevices.clear(); });
+    _bluetoothManager!.startDiscovery(timeout: const Duration(seconds: 5)).listen((result) {
+      if (!_discoveredDevices.any((d) => d.device.address == result.device.address)) {
+        setState(() { _discoveredDevices.add(result); });
       }
-    });
-    // Stop discovery after 5 seconds
-    Timer(const Duration(seconds: 5), () {
-      _discoveryStreamSubscription?.cancel();
-    });
+    }).onDone(() {
+      setState(() { _isScanning = false; });
   }
 
   void _loadPrefs() {
@@ -196,7 +192,7 @@ class _HomeScreenState extends State<HomeScreen> {
       await _connection?.close();
     } catch (_) {}
     try {
-      BluetoothConnection conn = await Bluetooth.connect(device.address);
+      BluetoothConnection conn = await BluetoothConnection.toAddress(device.address);
       _connection = conn;
       _connected = true;
       _selectedDevice = device;
@@ -532,7 +528,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void dispose() {
-    _discoveryStreamSubscription?.cancel();
     _btSub?.cancel();
     _connection?.dispose();
     _player.dispose();
@@ -552,7 +547,6 @@ class _HomeScreenState extends State<HomeScreen> {
           Card(child: Padding(
             padding: const EdgeInsets.all(8),
             child: Column(children: [
-              if (!_isBluetoothEnabled) const Text("Bluetooth is not enabled.", style: TextStyle(color: Colors.red)),
               Row(children: [
                 const Text('BT device:'), const SizedBox(width: 8),
                 Expanded(
@@ -564,7 +558,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     onChanged: (d) => setState(() => _selectedDevice = d),
                   ),
                 ),
-                IconButton(icon: const Icon(Icons.search), tooltip: 'Discover new devices', onPressed: _startDiscovery),
+                IconButton(icon: const Icon(Icons.search), tooltip: 'Discover new devices', onPressed: _isScanning ? null : _startDiscovery),
                 IconButton(icon: const Icon(Icons.refresh), onPressed: _initBluetooth)
               ]),
               // Display discovered devices if any
@@ -576,15 +570,13 @@ class _HomeScreenState extends State<HomeScreen> {
                     itemBuilder: (context, index) {
                       final result = _discoveredDevices[index];
                       return ListTile(
-                        title: Text(result.device?.name ?? 'Unknown Device'),
-                        subtitle: Text(result.device?.address ?? 'No Address'),
+                        title: Text(result.device.name ?? 'Unknown Device'),
+                        subtitle: Text(result.device.address),
                         onTap: () {
-                          if (result.device != null) {
-                            setState(() {
-                              _selectedDevice = result.device!;
-                              _discoveredDevices.clear();
-                            });
-                          }
+                          setState(() {
+                            _selectedDevice = result.device;
+                            _discoveredDevices.clear();
+                          });
                         },
                       );
                     },
@@ -601,7 +593,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ]),
             ]),
           )),
-          // ... The rest of your UI code remains the same ...
           // indicators
           Card(child: Padding(padding: const EdgeInsets.all(8), child: Row(children: [
             Container(width: 92, height: 92, alignment: Alignment.center, decoration: BoxDecoration(color: _indicatorColor(filteredValue), shape: BoxShape.circle), child: Text(filteredValue.toStringAsFixed(2), style: const TextStyle(fontSize: 18))),
