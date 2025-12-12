@@ -1,13 +1,18 @@
 // lib/main.dart
-// This is the original code, which is compatible with the new package.
-
+//
+// UPDATED: Now uses the 'flutter_bluetooth_serial_fork' package.
+// The only change required was the import statement below.
+//
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart'; // This is the correct import for the new package
+// =================================================================
+// CHANGE: Updated the import to use the correct, maintained fork.
+// =================================================================
+import 'package:flutter_bluetooth_serial_fork/flutter_bluetooth_serial_fork.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:csv/csv.dart';
